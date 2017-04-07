@@ -12,74 +12,58 @@ use Drupal\Component\Serialization\Yaml;
  * Plugin implementation of the 'raw_saved_query_widget' widget.
  *
  * @FieldWidget(
- *   id = "raw_saved_query_widget",
- *   label = @Translation("Raw Query Editor"),
+ *   id = "example_saved_query_widget",
+ *   label = @Translation("Example Query Editor"),
  *   field_types = {
  *     "saved_query_field"
  *   },
  *   multiple_values = FALSE
  * )
  */
-class RawSavedQueryWidget extends WidgetBase {
+class ExampleQueryWidget extends WidgetBase {
   /**
    * {@inheritdoc}
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
-    $entity_types = \Drupal::entityManager()->getDefinitions();
-    $entity_type_options = array();
-    foreach ($entity_types as $key => $data) {
-      if ($data->getGroup() == 'content') {
-        $entity_type_options[$key] = $data->getLabel(); // Lazy for the moment.
-      }
-    }
+
+    $title = empty($items[$delta]->conditions['title']) ? '' :$items[$delta]->conditions['title']['value'];
 
     $element['#type'] = 'fieldset';
     $element['#collapsible'] = TRUE;
 
     $element['entity_type'] = [
-      '#title' => t('Entity type'),
-      '#options' => $entity_type_options,
-      '#type' => 'select',
-      '#required' => TRUE,
-      '#default_value' => isset($items[$delta]->entity_type) ? $items[$delta]->entity_type : 'node',
+      '#type' => 'value',
+      '#value' => 'node',
     ];
-    $element['conditions'] = [
-      '#title' => t('Conditions'),
-      '#type' => 'textarea',
-      '#default_value' => empty($items[$delta]->conditions) ? NULL : Yaml::encode($items[$delta]->conditions),
+    $element['refresh_now'] = [
+      '#type' => 'value',
+      '#value' => TRUE,
     ];
+    $element['interval'] = [
+      '#type' => 'value',
+      '#value' => 360 * 2,
+    ];
+
+    $element['title'] = [
+      '#title' => t('Title Contains'),
+      '#type' => 'textfield',
+      '#default_value' => $title,
+    ];
+
     $element['sorts'] = [
-      '#title' => t('Sorts'),
-      '#type' => 'textarea',
-      '#default_value' => empty($items[$delta]->sorts) ? NULL : Yaml::encode($items[$delta]->sorts),
+      '#title' => t('Sort By'),
+      '#type' => 'select',
+      '#options' => array(
+        'date-asc' => t('Chronological'),
+        'date-desc' => t('Blog-style'),
+        'title-asc' => t('Alphabetical'),
+      ),
+      '#default_value' => isset($items[$delta]->sorts) ? Yaml::encode($items[$delta]->sorts) : NULL,
     ];
     $element['limit'] = [
       '#title' => t('Result limit'),
       '#type' => 'number',
       '#default_value' => isset($items[$delta]->limit) ? $items[$delta]->limit : NULL,
-    ];
-
-    $intervals = array(
-      (360) => t('1 hour'),
-      (360 * 2) => t('2 hour'),
-      (360 * 6) => t('6 hours'),
-      (360 * 24) => t('1 day'),
-      (360 * 24 * 7) => t('1 week'),
-    );
-    $element['interval'] = [
-      '#title' => t('Refresh interval'),
-      '#options' => $intervals,
-      '#type' => 'select',
-      '#default_value' => isset($items[$delta]->interval) ? $items[$delta]->interval : NULL,
-    ];
-    $element['refresh_now'] = [
-      '#title' => t('Refresh on save'),
-      '#type' => 'checkbox',
-    ];
-    $element['refreshed'] = [
-      '#title' => t('Last refreshed'),
-      '#type' => 'hidden',
-      '#value' => isset($items[$delta]->refreshed) ? $items[$delta]->refreshed : NULL,
     ];
 
     return $element;
@@ -123,12 +107,33 @@ class RawSavedQueryWidget extends WidgetBase {
         if (empty($value)) {
           unset($item[$key]);
         }
-        elseif (in_array($key, ['conditions', 'sorts'])) {
-          $item[$key] = Yaml::decode($value);
-        }
+      }
+
+      if (!empty($item['title'])) {
+        $item['conditions']['title'] = array(
+          'value' => $item['title'],
+          'operator' => 'CONTAINS',
+        );
+      }
+      else {
+        $item['conditions'] = [];
+      }
+      unset($item['title']);
+
+      switch ($item['sorts']) {
+        case 'date-asc':
+          $item['sorts'] = ['created' => 'ASC'];
+          break;
+        case 'date-desc':
+          $item['sorts'] = ['created' => 'DESC'];
+          break;
+        case 'title-asc':
+          $item['sorts'] = ['title' => 'ASC'];
+          break;
+        default:
+          unset($item['sorts']);
       }
     }
-
     return $values;
   }
 }
