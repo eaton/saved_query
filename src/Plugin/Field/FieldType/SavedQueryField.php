@@ -160,7 +160,7 @@ class SavedQueryField extends FieldItemBase {
     if ($this->refresh_now) {
       if ($entity = $this->getParent()->getParent()->getValue()) {
         if ($name = $this->getFieldDefinition()->getFieldStorageDefinition()->getName()) {
-          saved_query_update_single_entity($entity, $name);
+          saved_query_update_single_entity($entity, $name, FALSE);
         }
       }
     }
