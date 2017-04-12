@@ -199,16 +199,16 @@ class SavedQueryField extends FieldItemBase {
         }
 
         switch (strtoupper($value)) {
-            case 'IS NULL':
-              $query->exists($value);
-              break;
-            case 'IS NOT NULL':
-              $query->notExists($value);
-              break;
-            default:
-              $query->condition($key, $value, $operator);
-              break;
-          }
+          case 'IS NULL':
+            $query->exists($value);
+            break;
+          case 'IS NOT NULL':
+            $query->notExists($value);
+            break;
+          default:
+            $query->condition($key, $value, $operator);
+            break;
+        }
         }
       }
     }
