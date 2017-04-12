@@ -195,21 +195,21 @@ class SavedQueryField extends FieldItemBase {
         else {
           $value = $token->replace($condition);
           $operator = '=';
+          
         }
 
         switch (strtoupper($value)) {
             case 'IS NULL':
-              $query->notExists($value);
+              $query->exists($value);
               break;
             case 'IS NOT NULL':
-              $query->exists($value);
+              $query->notExists($value);
               break;
             default:
               $query->condition($key, $value, $operator);
               break;
           }
         }
-
       }
     }
 
