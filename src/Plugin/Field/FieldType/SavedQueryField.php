@@ -86,12 +86,10 @@ class SavedQueryField extends FieldItemBase {
           'length' => 64
         ],
         'raw_conditions' => [
-          'type' => 'varchar',
-          'length' => 2048
+          'type' => 'text',
         ],
         'raw_sorts' => [
-          'type' => 'varchar',
-          'length' => 2048
+          'type' => 'text',
         ],
         'limit' => ['type' => 'int'],
         'interval' => ['type' => 'int'],
@@ -174,7 +172,6 @@ class SavedQueryField extends FieldItemBase {
    */
   public function getQuery() {
     $query = \Drupal::entityQuery($this->entity_type);
-    $token = \Drupal::token();
 
     if ($limit = $this->limit) {
       $query->range(0, $limit);
@@ -189,27 +186,31 @@ class SavedQueryField extends FieldItemBase {
       }
       else {
         if (is_array($condition)) {
-          $value = $token->replace($condition['value']);
+          $value = $condition['value'];
           $operator = $condition['operator'];
         }
         else {
-          $value = $token->replace($condition);
+          $value = $condition;
           $operator = '=';
-          
         }
 
-        switch (strtoupper($value)) {
-          case 'IS NULL':
-            $query->exists($value);
-            break;
-          case 'IS NOT NULL':
-            $query->notExists($value);
-            break;
-          default:
-            $query->condition($key, $value, $operator);
-            break;
+        if (is_string($value)) {
+          switch (strtoupper($value)) {
+            case 'IS NULL':
+              $query->notExists($value);
+              break;
+            case 'IS NOT NULL':
+              $query->exists($value);
+              break;
+            default:
+              $query->condition($key, $value, $operator);
+              break;
+          }
         }
+        else {
+          $query->condition($key, $value, $operator);
         }
+
       }
     }
 
