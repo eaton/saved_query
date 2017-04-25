@@ -154,14 +154,11 @@ class SavedQueryField extends FieldItemBase {
     if (!empty($sorts) && is_array($sorts)) {
       $this->set('raw_sorts', serialize($sorts));
     }
-  }
 
-  public function postSave($update) {
-    parent::postSave($update);
     if ($this->refresh_now) {
       if ($entity = $this->getParent()->getParent()->getValue()) {
         if ($name = $this->getFieldDefinition()->getFieldStorageDefinition()->getName()) {
-          saved_query_update_single_entity($entity, $name);
+          saved_query_update_single_entity($entity, $name, FALSE);
         }
       }
     }

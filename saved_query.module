@@ -60,8 +60,11 @@ function saved_query_update_references($entity_type_id, $field_name, $ids) {
  *
  * @param \Drupal\Core\Entity\FieldableEntityInterface $entity
  * @param string $field
+ * @param bool $save
+ *  Whether to save the entity or not. If called during a preSave scenario,
+ *  should be set to FALSE.
  */
-function saved_query_update_single_entity(FieldableEntityInterface $entity, $field) {
+function saved_query_update_single_entity(FieldableEntityInterface $entity, $field, $save = TRUE) {
   if ($entity->hasField($field)) {
     $query_field = $entity->get($field)[0];
     $target_field = $entity->getFieldDefinition($field)->getSetting('target_field');
@@ -78,8 +81,9 @@ function saved_query_update_single_entity(FieldableEntityInterface $entity, $fie
         $entity->set($target_field, $references);
         $entity->{$field}->refreshed = time();
         $entity->{$field}->refresh_now = FALSE;
-
-        $entity->save();
+        if ($save) {
+          $entity->save();
+        }
       }
     }
   }
